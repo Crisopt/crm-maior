@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Óticas Maior · Receitas de Rua</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --red: #E8181A;
+      --red-light: #fff5f5;
+      --green: #1b7a3e;
+      --green-bg: #e6f4ec;
+      --amber: #b45309;
+      --amber-bg: #fff3e0;
+      --gray-bg: #f1f1f1;
+      --border: #e0e0e0;
+      --text: #222;
+      --text-muted: #999;
+      --bg: #f2f2f2;
+      --white: #fff;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; }
+    button { font-family: var(--font); }
+    input { font-family: var(--font); }
+
+    /* ── LOADING ── */
+    #loading-screen {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 9999; font-size: 14px; color: #ccc;
+    }
+
+    /* ── LOGIN ── */
+    #login-screen {
+      min-height: 100vh; background: var(--bg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .login-logo {
+      background: var(--red); border-radius: 16px; padding: 20px 36px;
+      display: inline-block; margin-bottom: 16px; text-align: center;
+    }
+    .login-logo .label { font-size: 10px; color: rgba(255,255,255,0.8); letter-spacing: 3px; text-transform: uppercase; }
+    .login-logo .brand { font-size: 32px; font-weight: 700; color: #fff; line-height: 1; }
+    .login-sub { font-size: 13px; color: #999; margin-bottom: 32px; }
+    .login-card {
+      background: var(--white); border-radius: 16px; border: 0.5px solid var(--border);
+      padding: 32px; width: 100%; max-width: 360px;
+    }
+    .login-card h2 { font-size: 16px; font-weight: 500; margin-bottom: 24px; }
+    .login-fields { display: flex; flex-direction: column; gap: 16px; }
+    .field-group { display: flex; flex-direction: column; gap: 6px; }
+    .field-group label { font-size: 12px; color: #666; font-weight: 500; }
+    .field-group input {
+      border: 0.5px solid #ddd; border-radius: 8px; padding: 9px 12px;
+      font-size: 13px; outline: none; color: var(--text); background: var(--white);
+      width: 100%;
+    }
+    .field-group input:focus { border-color: var(--red); }
+    .pass-wrap { position: relative; }
+    .pass-wrap input { padding-right: 40px; }
+    .pass-toggle {
+      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: #aaa; font-size: 16px; padding: 0;
+    }
+    .login-error {
+      background: #fff5f5; border: 0.5px solid #fca5a5;
+      border-radius: 8px; padding: 8px 12px; font-size: 12px; color: #c0181a;
+      display: none;
+    }
+    .btn-primary {
+      background: var(--red); color: #fff; border: none; border-radius: 10px;
+      padding: 12px 0; font-size: 14px; font-weight: 500; cursor: pointer;
+      width: 100%; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-primary:disabled { background: #f87171; cursor: not-allowed; }
+    .login-footer { font-size: 11px; color: #ccc; margin-top: 24px; }
+
+    /* ── APP ── */
+    #app-screen { display: none; flex-direction: column; min-height: 100vh; }
+    header {
+      background: var(--red); padding: 0 24px; height: 56px;
+      display: flex; align-items: center; gap: 16; flex-shrink: 0;
+    }
+    .header-logo .label { font-size: 9px; color: rgba(255,255,255,0.8); letter-spacing: 3px; text-transform: uppercase; }
+    .header-logo .brand { font-size: 20px; font-weight: 700; color: #fff; line-height: 1; }
+    .header-div { width: 1px; height: 30px; background: rgba(255,255,255,0.25); margin: 0 8px; }
+    .header-title { color: rgba(255,255,255,0.85); font-size: 13px; }
+    .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+    .header-email { color: rgba(255,255,255,0.75); font-size: 12px; }
+    .btn-logout {
+      background: rgba(255,255,255,0.18); color: #fff; border: none;
+      border-radius: 20px; font-size: 11px; padding: 4px 14px; cursor: pointer;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: clamp(280px, 30%, 340px) 1fr;
+      flex: 1; min-height: 0;
+    }
+    /* ── SIDEBAR ── */
+    aside {
+      background: var(--white); border-right: 0.5px solid var(--border);
+      padding: 24px; display: flex; flex-direction: column; gap: 18;
+      overflow-y: auto; height: calc(100vh - 56px); position: sticky; top: 56px;
+    }
+    .section-label { font-size: 11px; font-weight: 500; color: #aaa; letter-spacing: 1px; text-transform: uppercase; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field-label { font-size: 12px; font-weight: 500; color: #666; }
+    .field-label i { margin-right: 5px; }
+    .field-error { font-size: 11px; color: var(--red); }
+    .input-field {
+      border: 0.5px solid #ddd; border-radius: 8px; padding: 8px 12px;
+      font-size: 13px; color: var(--text); outline: none; width: 100%;
+    }
+    .input-field:focus { border-color: var(--red); }
+    .input-field.error { border: 1.5px solid var(--red); }
+    .divider { height: 0.5px; background: #ececec; }
+    .oftalmo-btn {
+      border: 0.5px solid #ddd; border-radius: 8px; padding: 9px 14px;
+      background: #fafafa; color: #444; font-size: 13px; cursor: pointer;
+      text-align: left; font-weight: 400; transition: all 0.12s; width: 100%;
+    }
+    .oftalmo-btn.active { border: 2px solid var(--red); background: var(--red); color: #fff; font-weight: 500; }
+    .situacao-btns { display: flex; gap: 8px; }
+    .situacao-btn {
+      flex: 1; border: 0.5px solid #ddd; border-radius: 8px; padding: 8px 4px;
+      background: #fafafa; font-size: 12px; cursor: pointer; transition: all 0.12s;
+      font-weight: 400; color: #666;
+    }
+    .voucher-hint {
+      background: var(--green-bg); border-radius: 8px; padding: 8px 12px;
+      font-size: 11px; color: var(--green); display: flex; align-items: center; gap: 6px;
+      display: none;
+    }
+    .btn-cadastrar {
+      margin-top: auto; background: var(--red); color: #fff; border: none; border-radius: 10px;
+      padding: 12px 0; font-size: 14px; font-weight: 500; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-cadastrar:disabled { background: #f87171; cursor: not-allowed; }
+
+    /* ── MAIN ── */
+    main { padding: 24px; display: flex; flex-direction: column; gap: 20; overflow-y: auto; }
+    .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .metric-card { background: var(--white); border-radius: 10px; border: 0.5px solid var(--border); padding: 14px 16px; }
+    .metric-card .metric-label { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+    .metric-card .metric-value { font-size: 24px; font-weight: 500; color: var(--text); }
+    .filters-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; }
+    .filters-row .title { font-size: 14px; font-weight: 500; }
+    .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+    .filter-btn {
+      font-size: 11px; padding: 4px 12px; border-radius: 20px;
+      border: 0.5px solid #ddd; background: #f5f5f5; color: #666;
+      cursor: pointer; font-weight: 400;
+    }
+    .filter-btn.active { border: none; background: var(--red); color: #fff; font-weight: 500; }
+    .clients-list { display: flex; flex-direction: column; gap: 10px; }
+    .client-card {
+      background: var(--white); border: 0.5px solid var(--border);
+      border-radius: 12px; padding: 12px 16px;
+      display: flex; align-items: center; gap: 14;
+    }
+    .avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600; flex-shrink: 0;
+    }
+    .client-info { flex: 1; min-width: 0; }
+    .client-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .client-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; white-space: nowrap; }
+    .btn-wa {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: #25D366; border: none; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .empty-msg { text-align: center; color: #bbb; font-size: 14px; padding: 40px; }
+    .loading-msg { text-align: center; color: #ccc; font-size: 14px; padding: 40px; }
+
+    /* ── TOAST ── */
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #222; color: #fff; font-size: 13px; padding: 10px 20px;
+      border-radius: 30px; z-index: 999; white-space: nowrap; display: none;
+    }
+
+    /* ── MODAL EDIÇÃO ── */
+    #modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      display: none; align-items: center; justify-content: center; z-index: 500;
+    }
+    #modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fff; border-radius: 16px; padding: 28px; width: 100%; max-width: 380px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    }
+    .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .modal-subtitle { font-size: 12px; color: #999; margin-bottom: 20px; }
+    .modal-situacoes { display: flex; gap: 8px; margin-bottom: 20px; }
+    .modal-sit-btn {
+      flex: 1; border: 0.5px solid #ddd; border-radius: 8px; padding: 10px 4px;
+      background: #fafafa; font-size: 12px; cursor: pointer; font-weight: 400; color: #666;
+      transition: all 0.12s;
+    }
+    .modal-footer { display: flex; gap: 10px; }
+    .btn-cancel {
+      flex: 1; background: #f2f2f2; color: #444; border: none; border-radius: 10px;
+      padding: 11px 0; font-size: 13px; font-weight: 500; cursor: pointer;
+    }
+    .btn-confirm {
+      flex: 2; background: var(--red); color: #fff; border: none; border-radius: 10px;
+      padding: 11px 0; font-size: 13px; font-weight: 500; cursor: pointer;
+    }
+    .btn-confirm:disabled { background: #f87171; cursor: not-allowed; }
+
+    @media (max-width: 700px) {
+      .layout { grid-template-columns: 1fr; }
+      aside { position: static; height: auto; }
+      .metrics { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading-screen">Carregando...</div>
+
+<!-- LOGIN -->
+<div id="login-screen" style="display:none;">
+  <div style="text-align:center; margin-bottom:32px;">
+    <div class="login-logo">
+      <div class="label">Óticas</div>
+      <div class="brand">MaioR</div>
+    </div>
+    <div class="login-sub">Receitas de Rua · Acesso restrito</div>
+  </div>
+  <div class="login-card">
+    <h2>Entrar na sua conta</h2>
+    <div class="login-fields">
+      <div class="field-group">
+        <label>E-mail</label>
+        <input type="email" id="login-email" placeholder="seu@email.com" />
+      </div>
+      <div class="field-group">
+        <label>Senha</label>
+        <div class="pass-wrap">
+          <input type="password" id="login-senha" placeholder="••••••••" />
+          <button class="pass-toggle" id="toggle-pass" type="button">
+            <i class="ti ti-eye" id="eye-icon"></i>
+          </button>
+        </div>
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <button class="btn-primary" id="btn-login">Entrar</button>
+    </div>
+  </div>
+  <div class="login-footer">Óticas Maior © <span id="year-login"></span></div>
+</div>
+
+<!-- APP -->
+<div id="app-screen">
+  <header>
+    <div class="header-logo">
+      <div class="label">Óticas</div>
+      <div class="brand">MaioR</div>
+    </div>
+    <div class="header-div"></div>
+    <span class="header-title">Receitas de Rua</span>
+    <div class="header-right">
+      <span class="header-email" id="header-email">
+        <i class="ti ti-user" style="margin-right:5px;"></i>
+        <span id="user-email-text"></span>
+      </span>
+      <button class="btn-logout" id="btn-logout">
+        <i class="ti ti-logout" style="margin-right:4px;"></i>Sair
+      </button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- SIDEBAR -->
+    <aside>
+      <div class="section-label">Novo cliente</div>
+
+      <div class="field">
+        <div class="field-label"><i class="ti ti-user"></i>Nome completo</div>
+        <input class="input-field" id="f-nome" placeholder="Ex: Maria Silva" />
+        <div class="field-error" id="err-nome"></div>
+      </div>
+
+      <div class="field">
+        <div class="field-label"><i class="ti ti-phone"></i>Telefone / WhatsApp</div>
+        <input class="input-field" id="f-telefone" placeholder="(19) 99999-9999" maxlength="15" />
+        <div class="field-error" id="err-telefone"></div>
+      </div>
+
+      <div class="field">
+        <div class="field-label"><i class="ti ti-calendar"></i>Data da visita</div>
+        <input class="input-field" type="date" id="f-data" />
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field">
+        <div class="field-label"><i class="ti ti-stethoscope"></i>Oftalmologista</div>
+        <div id="oftalmo-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        <div class="field-error" id="err-oftalmo"></div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="field">
+        <div class="field-label"><i class="ti ti-tag"></i>Situação</div>
+        <div class="situacao-btns" id="situacao-list"></div>
+        <div class="field-error" id="err-situacao"></div>
+      </div>
+
+      <div class="voucher-hint" id="voucher-hint">
+        <i class="ti ti-brand-whatsapp"></i>
+        WhatsApp com voucher de R$ 197 será aberto automaticamente
+      </div>
+
+      <button class="btn-cadastrar" id="btn-cadastrar">
+        <i class="ti ti-plus"></i>Cadastrar cliente
+      </button>
+    </aside>
+
+    <!-- MAIN -->
+    <main>
+      <div class="metrics">
+        <div class="metric-card">
+          <div class="metric-label">Clientes cadastrados</div>
+          <div class="metric-value" id="m-total">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Compraram</div>
+          <div class="metric-value" style="color:var(--green);" id="m-compraram">0</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Conversão</div>
+          <div class="metric-value" style="color:var(--red);" id="m-conversao">0%</div>
+        </div>
+      </div>
+
+      <div class="filters-row">
+        <span class="title">Clientes</span>
+        <div class="filters">
+          <button class="filter-btn active" data-filtro="todos">Todos</button>
+          <button class="filter-btn" data-filtro="comprou">Comprou</button>
+          <button class="filter-btn" data-filtro="reservado">Reservado</button>
+          <button class="filter-btn" data-filtro="orcamento">Orçamento</button>
+        </div>
+      </div>
+
+      <div class="clients-list" id="clients-list">
+        <div class="loading-msg">Carregando clientes...</div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- MODAL EDIÇÃO SITUAÇÃO -->
+<div id="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-nome"></div>
+    <div class="modal-subtitle">Alterar situação do cliente</div>
+    <div class="modal-situacoes" id="modal-situacoes"></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="modal-cancel">Cancelar</button>
+      <button class="btn-confirm" id="modal-confirm">Salvar alteração</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- AVISO DE OCIOSIDADE -->
+<div id="idle-warning" style="
+  display:none; position:fixed; bottom:72px; left:50%; transform:translateX(-50%);
+  background:#b45309; color:#fff; font-size:12px; padding:10px 20px;
+  border-radius:30px; z-index:1000; white-space:nowrap; box-shadow:0 2px 12px rgba(0,0,0,0.18);
+  display:none; align-items:center; gap:8px;">
+  <i class="ti ti-clock-exclamation"></i>
+  <span id="idle-warning-text">Sessão expira em 1 minuto por inatividade</span>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+  import { initializeApp }           from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
+                                     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp }
+                                     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  // ── CONFIG FIREBASE ────────────────────────────────────────
+  const firebaseConfig = {
+    apiKey:            "AIzaSyAiQd_blQJeF1sfEdCFDbNqofRj4cE29oI",
+    authDomain:        "clientes-de-rua.firebaseapp.com",
+    projectId:         "clientes-de-rua",
+    storageBucket:     "clientes-de-rua.firebasestorage.app",
+    messagingSenderId: "949140816023",
+    appId:             "1:949140816023:web:95512cd12b25a3b83869d2",
+  };
+  const app  = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db   = getFirestore(app);
+
+  // ── SEGURANÇA: LOGOUT POR ATUALIZAÇÃO DE PÁGINA E OCIOSIDADE ──────────────
+  // Tempo máximo de ociosidade em minutos (altere aqui se necessário)
+  const IDLE_TIMEOUT_MINUTES = 30;
+  const IDLE_TIMEOUT_MS      = IDLE_TIMEOUT_MINUTES * 60 * 1000;
+
+  // Detecta nova sessão de aba/guia: se não há flag "ativo" na sessionStorage,
+  // é porque a página foi recarregada ou aberta nova aba → desloga imediatamente.
+  if (!sessionStorage.getItem("sessaoAtiva")) {
+    // Marca a sessão como ativa para não deslogar múltiplas vezes
+    sessionStorage.setItem("sessaoAtiva", "1");
+    // Desloga de forma silenciosa (o onAuthStateChanged cuidará da UI)
+    import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js")
+      .then(({ getAuth, signOut }) => signOut(getAuth()))
+      .catch(() => {});
+  }
+
+  // Timer de ociosidade
+  let idleTimer    = null;
+  let warningTimer = null;
+  const WARNING_BEFORE_MS = 60 * 1000; // avisa 1 minuto antes
+
+  function hideIdleWarning() {
+    const w = document.getElementById("idle-warning");
+    if (w) w.style.display = "none";
+  }
+  function showIdleWarning(secsLeft) {
+    const w = document.getElementById("idle-warning");
+    const t = document.getElementById("idle-warning-text");
+    if (!w) return;
+    if (t) t.textContent = `Sessão expira em ${secsLeft}s por inatividade`;
+    w.style.display = "flex";
+  }
+
+  function resetIdleTimer() {
+    clearTimeout(idleTimer);
+    clearTimeout(warningTimer);
+    hideIdleWarning();
+
+    // Avisa 1 min antes (se timeout > 1 min)
+    if (IDLE_TIMEOUT_MS > WARNING_BEFORE_MS) {
+      let secsLeft = Math.round(WARNING_BEFORE_MS / 1000);
+      warningTimer = setTimeout(() => {
+        showIdleWarning(secsLeft);
+        // Contagem regressiva no texto
+        const countdown = setInterval(() => {
+          secsLeft--;
+          if (secsLeft > 0) showIdleWarning(secsLeft);
+          else clearInterval(countdown);
+        }, 1000);
+      }, IDLE_TIMEOUT_MS - WARNING_BEFORE_MS);
+    }
+
+    idleTimer = setTimeout(async () => {
+      hideIdleWarning();
+      showToast(`Sessão encerrada por ociosidade (${IDLE_TIMEOUT_MINUTES} min).`);
+      await new Promise(r => setTimeout(r, 1800));
+      sessionStorage.removeItem("sessaoAtiva");
+      signOut(auth);
+    }, IDLE_TIMEOUT_MS);
+  }
+  // Reinicia o timer em qualquer interação do usuário
+  ["mousemove","mousedown","keydown","touchstart","scroll","click"].forEach(ev =>
+    document.addEventListener(ev, resetIdleTimer, { passive: true })
+  );
+  resetIdleTimer(); // inicia na carga da página
+
+  // ── DADOS ─────────────────────────────────────────────────
+  const OFTALMOLOGISTAS = [
+    "Danilo Pimentel","Fernanda Pimentel","Isabele Leone",
+    "Ana Claudia","Roberta Sleptys","Henrique Balarin","Marcia Pesce",
+  ];
+  const SITUACOES = [
+    { value:"comprou",   label:"Comprou",   color:"#1b7a3e", bg:"#e6f4ec" },
+    { value:"reservado", label:"Reservado", color:"#b45309", bg:"#fff3e0" },
+    { value:"orcamento", label:"Orçamento", color:"#555",    bg:"#f1f1f1" },
+  ];
+  const AVATAR_COLORS = [
+    { bg:"#fce4e4",color:"#c0181a" },{ bg:"#e4eefe",color:"#1a4fc0" },
+    { bg:"#e4f4e4",color:"#1a7a1a" },{ bg:"#fef4e4",color:"#c07a1a" },
+    { bg:"#f0e4fe",color:"#7a1ac0" },{ bg:"#e4fef4",color:"#1ac07a" },
+    { bg:"#fee4f0",color:"#c01a7a" },
+  ];
+
+  // ── STATE ─────────────────────────────────────────────────
+  let clientes  = [];
+  let filtro    = "todos";
+  let oftalmoSel = "";
+  let situacaoSel = "";
+
+  // ── HELPERS ───────────────────────────────────────────────
+  document.getElementById("year-login").textContent = new Date().getFullYear();
+  document.getElementById("f-data").value = new Date().toISOString().split("T")[0];
+
+  // Converte emojis para sequências unicode \uXXXX compatíveis com WhatsApp Web desktop
+  function encodeEmoji(str) {
+    return encodeURIComponent(str);
+  }
+
+  function avatarStyle(name) {
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = name.charCodeAt(i) + ((h << 5) - h);
+    return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+  }
+  function initials(name) {
+    const p = name.trim().split(" ");
+    return p.length === 1 ? p[0][0].toUpperCase() : (p[0][0] + p[p.length-1][0]).toUpperCase();
+  }
+  function fmtData(iso) {
+    if (!iso) return "";
+    const [y,m,d] = iso.split("-"); return `${d}/${m}/${y}`;
+  }
+  function maskPhone(v) {
+    const d = v.replace(/\D/g,"").slice(0,11);
+    if (d.length <= 2)  return `(${d}`;
+    if (d.length <= 7)  return `(${d.slice(0,2)}) ${d.slice(2)}`;
+    return `(${d.slice(0,2)}) ${d.slice(2,7)}-${d.slice(7)}`;
+  }
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = "✓  " + msg;
+    t.style.display = "block";
+    setTimeout(() => t.style.display = "none", 3500);
+  }
+  function mensagemVoucher(nomeCompleto, dataCompra) {
+    const nome = nomeCompleto.split(" ")[0];
+    const d = dataCompra ? new Date(dataCompra + "T12:00:00") : new Date();
+    d.setFullYear(d.getFullYear() + 1);
+    const validade = d.toLocaleDateString("pt-BR");
+    // Emojis como escape Unicode puro — evita corrupção em qualquer encoding de arquivo
+    const e = {
+      smile:   "\uD83D\uDE0A", // 😊
+      crown:   "\uD83D\uDC51", // 👑
+      glasses: "\uD83D\uDD76\uFE0F", // 🕶️
+      ticket:  "\uD83C\uDF9F\uFE0F", // 🎟️
+      cal:     "\uD83D\uDCC5", // 📅
+      hug:     "\uD83E\uDD17", // 🤗
+    };
+    return (
+      `Ol\u00E1, ${nome}! ${e.smile}\n\n` +
+      `Foi um prazer enorme te atender na *\u00D3ticas Maior* ${e.crown}\n` +
+      `Esperamos que voc\u00EA esteja amando sua nova escolha! ${e.glasses}\n\n` +
+      `Como forma de agradecimento especial, preparamos um presente exclusivo para a sua pr\u00F3xima visita:\n\n` +
+      `${e.ticket} *VOUCHER DE R$ 197,00 DE DESCONTO*\n` +
+      `${e.cal} V\u00E1lido at\u00E9: *${validade}*\n\n` +
+      `Basta apresentar esta mensagem na loja na hora da compra.\n\n` +
+      `Te esperamos com os bra\u00E7os abertos! ${e.hug}\n` +
+      `*\u00D3ticas Maior* ${e.crown}`
+    );
+  }
+  function abrirWhatsApp(c) {
+    const num = c.telefone.replace(/\D/g,"");
+    const texto = mensagemVoucher(c.nome, c.data);
+    // encodeURIComponent preserva emojis Unicode corretamente no WhatsApp Web desktop e mobile
+    const msg = encodeURIComponent(texto);
+    window.open(`https://wa.me/55${num}?text=${msg}`, "_blank");
+  }
+
+  // ── BUILD SIDEBAR BUTTONS ─────────────────────────────────
+  (function buildSidebar() {
+    const ol = document.getElementById("oftalmo-list");
+    OFTALMOLOGISTAS.forEach(nome => {
+      const b = document.createElement("button");
+      b.className = "oftalmo-btn";
+      b.textContent = nome;
+      b.addEventListener("click", () => {
+        oftalmoSel = nome;
+        ol.querySelectorAll(".oftalmo-btn").forEach(x => x.classList.remove("active"));
+        b.classList.add("active");
+        document.getElementById("err-oftalmo").textContent = "";
+      });
+      ol.appendChild(b);
+    });
+
+    const sl = document.getElementById("situacao-list");
+    SITUACOES.forEach(s => {
+      const b = document.createElement("button");
+      b.className = "situacao-btn";
+      b.textContent = s.label;
+      b.dataset.value = s.value;
+      b.addEventListener("click", () => {
+        situacaoSel = s.value;
+        sl.querySelectorAll(".situacao-btn").forEach(x => {
+          x.style.border = "0.5px solid #ddd";
+          x.style.background = "#fafafa";
+          x.style.color = "#666";
+          x.style.fontWeight = "400";
+        });
+        b.style.border = `2px solid ${s.color}`;
+        b.style.background = s.bg;
+        b.style.color = s.color;
+        b.style.fontWeight = "600";
+        document.getElementById("err-situacao").textContent = "";
+        document.getElementById("voucher-hint").style.display =
+          s.value === "comprou" ? "flex" : "none";
+      });
+      sl.appendChild(b);
+    });
+  })();
+
+  // ── PHONE MASK ────────────────────────────────────────────
+  document.getElementById("f-telefone").addEventListener("input", function() {
+    this.value = maskPhone(this.value);
+  });
+
+  // ── FILTROS ───────────────────────────────────────────────
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      filtro = btn.dataset.filtro;
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderList();
+    });
+  });
+
+  // ── RENDER LIST ───────────────────────────────────────────
+  function renderList() {
+    const lista = filtro === "todos" ? clientes : clientes.filter(c => c.situacao === filtro);
+    const container = document.getElementById("clients-list");
+    const total     = clientes.length;
+    const compraram = clientes.filter(c => c.situacao === "comprou").length;
+    const conversao = total ? Math.round((compraram / total) * 100) : 0;
+    document.getElementById("m-total").textContent     = total;
+    document.getElementById("m-compraram").textContent = compraram;
+    document.getElementById("m-conversao").textContent = conversao + "%";
+
+    if (lista.length === 0) {
+      container.innerHTML = `<div class="empty-msg">Nenhum cliente nessa categoria ainda.</div>`;
+      return;
+    }
+    container.innerHTML = "";
+    lista.forEach(c => {
+      const sit = SITUACOES.find(s => s.value === c.situacao);
+      const av  = avatarStyle(c.nome);
+      const div = document.createElement("div");
+      div.className = "client-card";
+      div.style.cursor = "default";
+      div.innerHTML = `
+        <div class="avatar" style="background:${av.bg};color:${av.color};">${initials(c.nome)}</div>
+        <div class="client-info">
+          <div class="client-name">${c.nome}</div>
+          <div class="client-meta">${c.oftalmo} · ${c.telefone} · ${fmtData(c.data)}</div>
+        </div>
+        ${sit ? `<span class="badge" style="background:${sit.bg};color:${sit.color};cursor:pointer;" title="Clique para editar situação">${sit.label} ✎</span>` : ""}
+        <button class="btn-wa" title="Enviar WhatsApp">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+          </svg>
+        </button>
+      `;
+      div.querySelector(".btn-wa").addEventListener("click", () => abrirWhatsApp(c));
+      const badge = div.querySelector(".badge");
+      if (badge) badge.addEventListener("click", () => abrirModalEdicao(c));
+      container.appendChild(div);
+    });
+  }
+
+  // ── MODAL EDIÇÃO SITUAÇÃO ─────────────────────────────────
+  let modalClienteAtual = null;
+  let modalSituacaoSel  = "";
+
+  function abrirModalEdicao(c) {
+    modalClienteAtual = c;
+    modalSituacaoSel  = c.situacao;
+    document.getElementById("modal-nome").textContent = c.nome;
+
+    const sl = document.getElementById("modal-situacoes");
+    sl.innerHTML = "";
+    SITUACOES.forEach(s => {
+      const b = document.createElement("button");
+      b.className = "modal-sit-btn";
+      b.textContent = s.label;
+      b.dataset.value = s.value;
+      if (s.value === c.situacao) {
+        b.style.border = `2px solid ${s.color}`;
+        b.style.background = s.bg;
+        b.style.color = s.color;
+        b.style.fontWeight = "600";
+      }
+      b.addEventListener("click", () => {
+        modalSituacaoSel = s.value;
+        sl.querySelectorAll(".modal-sit-btn").forEach(x => {
+          x.style.border = "0.5px solid #ddd"; x.style.background = "#fafafa";
+          x.style.color = "#666"; x.style.fontWeight = "400";
+        });
+        b.style.border = `2px solid ${s.color}`;
+        b.style.background = s.bg;
+        b.style.color = s.color;
+        b.style.fontWeight = "600";
+      });
+      sl.appendChild(b);
+    });
+
+    document.getElementById("modal-overlay").classList.add("open");
+  }
+
+  document.getElementById("modal-cancel").addEventListener("click", () => {
+    document.getElementById("modal-overlay").classList.remove("open");
+  });
+  document.getElementById("modal-overlay").addEventListener("click", e => {
+    if (e.target === document.getElementById("modal-overlay"))
+      document.getElementById("modal-overlay").classList.remove("open");
+  });
+
+  document.getElementById("modal-confirm").addEventListener("click", async () => {
+    if (!modalClienteAtual || !modalSituacaoSel) return;
+    const btn = document.getElementById("modal-confirm");
+    btn.disabled = true;
+    btn.textContent = "Salvando...";
+    try {
+      const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+      const situacaoAnterior = modalClienteAtual.situacao;
+      await updateDoc(doc(db, "clientes", modalClienteAtual.id), { situacao: modalSituacaoSel });
+      // Atualiza estado local
+      const idx = clientes.findIndex(c => c.id === modalClienteAtual.id);
+      if (idx !== -1) clientes[idx].situacao = modalSituacaoSel;
+      // Se mudou para "comprou", abre WhatsApp com voucher
+      if (modalSituacaoSel === "comprou" && situacaoAnterior !== "comprou") {
+        abrirWhatsApp(clientes[idx]);
+      }
+      document.getElementById("modal-overlay").classList.remove("open");
+      renderList();
+      showToast("Situação atualizada!");
+    } catch {
+      showToast("Erro ao atualizar. Tente novamente.");
+    }
+    btn.disabled = false;
+    btn.textContent = "Salvar alteração";
+  });
+
+  // ── AUTH STATE ────────────────────────────────────────────
+  onAuthStateChanged(auth, async (user) => {
+    document.getElementById("loading-screen").style.display = "none";
+    if (!user) {
+      document.getElementById("login-screen").style.display = "flex";
+      document.getElementById("app-screen").style.display   = "none";
+      return;
+    }
+    document.getElementById("login-screen").style.display = "none";
+    document.getElementById("app-screen").style.display   = "flex";
+    document.getElementById("user-email-text").textContent = user.email;
+
+    // Carregar clientes
+    try {
+      const q    = query(collection(db, "clientes"), orderBy("criadoEm", "desc"));
+      const snap = await getDocs(q);
+      clientes   = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    } catch {
+      showToast("Erro ao carregar clientes.");
+    }
+    renderList();
+  });
+
+  // ── LOGIN ─────────────────────────────────────────────────
+  document.getElementById("btn-login").addEventListener("click", async () => {
+    const email = document.getElementById("login-email").value.trim();
+    const senha = document.getElementById("login-senha").value;
+    const errEl = document.getElementById("login-error");
+    const btn   = document.getElementById("btn-login");
+    errEl.style.display = "none";
+    btn.disabled = true;
+    btn.textContent = "Entrando...";
+    try {
+      await signInWithEmailAndPassword(auth, email, senha);
+    } catch (err) {
+      const msgs = {
+        "auth/invalid-credential": "E-mail ou senha incorretos.",
+        "auth/user-not-found":     "Usuário não encontrado.",
+        "auth/wrong-password":     "Senha incorreta.",
+        "auth/invalid-email":      "E-mail inválido.",
+        "auth/too-many-requests":  "Muitas tentativas. Aguarde alguns minutos.",
+      };
+      errEl.textContent   = msgs[err.code] || "Erro ao entrar. Tente novamente.";
+      errEl.style.display = "block";
+    }
+    btn.disabled = false;
+    btn.textContent = "Entrar";
+  });
+  document.getElementById("login-email").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("btn-login").click();
+  });
+  document.getElementById("login-senha").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("btn-login").click();
+  });
+
+  // ── TOGGLE SENHA ──────────────────────────────────────────
+  document.getElementById("toggle-pass").addEventListener("click", () => {
+    const inp  = document.getElementById("login-senha");
+    const icon = document.getElementById("eye-icon");
+    const show = inp.type === "password";
+    inp.type   = show ? "text" : "password";
+    icon.className = show ? "ti ti-eye-off" : "ti ti-eye";
+  });
+
+  // ── LOGOUT ────────────────────────────────────────────────
+  document.getElementById("btn-logout").addEventListener("click", () => {
+    sessionStorage.removeItem("sessaoAtiva");
+    signOut(auth);
+  });
+
+  // ── CADASTRAR ─────────────────────────────────────────────
+  document.getElementById("btn-cadastrar").addEventListener("click", async () => {
+    const nome     = document.getElementById("f-nome").value.trim();
+    const telefone = document.getElementById("f-telefone").value.trim();
+    const data     = document.getElementById("f-data").value;
+    let valid = true;
+    ["nome","telefone","oftalmo","situacao"].forEach(k => {
+      document.getElementById("err-" + k).textContent = "";
+    });
+    if (!nome)      { document.getElementById("err-nome").textContent = "Informe o nome completo"; valid = false; }
+    if (!telefone)  { document.getElementById("err-telefone").textContent = "Informe o telefone"; valid = false; }
+    if (!oftalmoSel){ document.getElementById("err-oftalmo").textContent = "Selecione o oftalmologista"; valid = false; }
+    if (!situacaoSel){ document.getElementById("err-situacao").textContent = "Selecione a situação"; valid = false; }
+    if (!valid) return;
+
+    const btn = document.getElementById("btn-cadastrar");
+    btn.disabled = true;
+    btn.innerHTML = `<i class="ti ti-loader"></i>Salvando...`;
+    try {
+      const docData = { nome, telefone, data, oftalmo: oftalmoSel, situacao: situacaoSel, criadoEm: serverTimestamp() };
+      const ref = await addDoc(collection(db, "clientes"), docData);
+      const novo = { id: ref.id, nome, telefone, data, oftalmo: oftalmoSel, situacao: situacaoSel };
+      clientes.unshift(novo);
+      if (situacaoSel === "comprou") abrirWhatsApp(novo);
+      // Reset form
+      document.getElementById("f-nome").value = "";
+      document.getElementById("f-telefone").value = "";
+      document.getElementById("f-data").value = new Date().toISOString().split("T")[0];
+      oftalmoSel  = "";
+      situacaoSel = "";
+      document.querySelectorAll(".oftalmo-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".situacao-btn").forEach(b => {
+        b.style.border = "0.5px solid #ddd"; b.style.background = "#fafafa";
+        b.style.color = "#666"; b.style.fontWeight = "400";
+      });
+      document.getElementById("voucher-hint").style.display = "none";
+      renderList();
+      showToast("Cliente cadastrado com sucesso!");
+    } catch {
+      showToast("Erro ao salvar. Verifique sua conexão.");
+    }
+    btn.disabled = false;
+    btn.innerHTML = `<i class="ti ti-plus"></i>Cadastrar cliente`;
+  });
+</script>
+</body>
+</html>
