@@ -393,7 +393,8 @@
   import { initializeApp }           from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged }
                                      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-  import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp }
+  import { getFirestore, collection, addDoc, getDocs, getDoc, updateDoc,
+           query, orderBy, where, doc, serverTimestamp }
                                      from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
   // ── CONFIG FIREBASE ────────────────────────────────────────
@@ -493,10 +494,11 @@
   ];
 
   // ── STATE ─────────────────────────────────────────────────
-  let clientes  = [];
-  let filtro    = "todos";
+  let clientes   = [];
+  let filtro     = "todos";
   let oftalmoSel = "";
   let situacaoSel = "";
+  let lojaId     = "";   // ID do documento da loja no Firestore
 
   // ── HELPERS ───────────────────────────────────────────────
   document.getElementById("year-login").textContent = new Date().getFullYear();
@@ -719,9 +721,8 @@
     btn.disabled = true;
     btn.textContent = "Salvando...";
     try {
-      const { doc, updateDoc } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
       const situacaoAnterior = modalClienteAtual.situacao;
-      await updateDoc(doc(db, "clientes", modalClienteAtual.id), { situacao: modalSituacaoSel });
+      await updateDoc(doc(db, "lojas", lojaId, "clientes", modalClienteAtual.id), { situacao: modalSituacaoSel });
       // Atualiza estado local
       const idx = clientes.findIndex(c => c.id === modalClienteAtual.id);
       if (idx !== -1) clientes[idx].situacao = modalSituacaoSel;
@@ -743,21 +744,40 @@
   onAuthStateChanged(auth, async (user) => {
     document.getElementById("loading-screen").style.display = "none";
     if (!user) {
+      lojaId = "";
       document.getElementById("login-screen").style.display = "flex";
       document.getElementById("app-screen").style.display   = "none";
       return;
     }
-    document.getElementById("login-screen").style.display = "none";
-    document.getElementById("app-screen").style.display   = "flex";
-    document.getElementById("user-email-text").textContent = user.email;
 
-    // Carregar clientes
+    // Identifica a loja pelo email do usuário logado
     try {
-      const q    = query(collection(db, "clientes"), orderBy("criadoEm", "desc"));
+      const lojasSnap = await getDocs(
+        query(collection(db, "lojas"), where("email", "==", user.email))
+      );
+
+      if (lojasSnap.empty) {
+        // Email autenticado mas sem documento de loja cadastrado
+        showToast("Loja não encontrada para este e-mail. Contate o administrador.");
+        sessionStorage.removeItem("sessaoAtiva");
+        signOut(auth);
+        return;
+      }
+
+      const lojaDoc = lojasSnap.docs[0];
+      lojaId = lojaDoc.id;
+      const nomeLoja = lojaDoc.data().nome || user.email;
+
+      document.getElementById("login-screen").style.display = "none";
+      document.getElementById("app-screen").style.display   = "flex";
+      document.getElementById("user-email-text").textContent = nomeLoja;
+
+      // Carrega apenas os clientes desta loja
+      const q    = query(collection(db, "lojas", lojaId, "clientes"), orderBy("criadoEm", "desc"));
       const snap = await getDocs(q);
       clientes   = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     } catch {
-      showToast("Erro ao carregar clientes.");
+      showToast("Erro ao carregar dados da loja.");
     }
     renderList();
   });
@@ -829,7 +849,7 @@
     btn.innerHTML = `<i class="ti ti-loader"></i>Salvando...`;
     try {
       const docData = { nome, telefone, data, oftalmo: oftalmoSel, situacao: situacaoSel, criadoEm: serverTimestamp() };
-      const ref = await addDoc(collection(db, "clientes"), docData);
+      const ref = await addDoc(collection(db, "lojas", lojaId, "clientes"), docData);
       const novo = { id: ref.id, nome, telefone, data, oftalmo: oftalmoSel, situacao: situacaoSel };
       clientes.unshift(novo);
       if (situacaoSel === "comprou") abrirWhatsApp(novo);
