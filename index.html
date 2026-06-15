@@ -559,11 +559,12 @@
     );
   }
   function abrirWhatsApp(c) {
-    const num = c.telefone.replace(/\D/g,"");
+    const num   = c.telefone.replace(/\D/g,"");
     const texto = mensagemVoucher(c.nome, c.data);
-    // encodeURIComponent preserva emojis Unicode corretamente no WhatsApp Web desktop e mobile
-    const msg = encodeURIComponent(texto);
-    window.open(`https://wa.me/55${num}?text=${msg}`, "_blank");
+    const msg   = encodeURIComponent(texto);
+    // api.whatsapp.com abre direto no app instalado (Windows/Mac/mobile)
+    // sem passar pelo WhatsApp Web como intermediário, evitando dupla codificação dos emojis
+    window.open(`https://api.whatsapp.com/send?phone=55${num}&text=${msg}`, "_blank");
   }
 
   // ── BUILD SIDEBAR BUTTONS ─────────────────────────────────
