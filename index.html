@@ -216,6 +216,92 @@
     }
     .btn-confirm:disabled { background: #f87171; cursor: not-allowed; }
 
+    /* ── DROPDOWN OFTALMO ── */
+    .oftalmo-dropdown-wrap { position: relative; }
+    .oftalmo-dropdown-trigger {
+      border: 0.5px solid #ddd; border-radius: 8px; padding: 9px 14px;
+      background: #fafafa; color: #444; font-size: 13px; cursor: pointer;
+      text-align: left; font-weight: 400; width: 100%;
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      transition: all 0.12s;
+    }
+    .oftalmo-dropdown-trigger.active-sel { border: 2px solid var(--red); background: var(--red); color: #fff; font-weight: 500; }
+    .oftalmo-dropdown-trigger.active-sel .dropdown-arrow { color: #fff; }
+    .dropdown-arrow { font-size: 12px; color: #aaa; flex-shrink: 0; transition: transform 0.15s; }
+    .dropdown-arrow.open { transform: rotate(180deg); }
+    .oftalmo-dropdown-menu {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: #fff; border: 0.5px solid #ddd; border-radius: 10px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.12); z-index: 200;
+      overflow: hidden; display: none; max-height: 260px; overflow-y: auto;
+    }
+    .oftalmo-dropdown-menu.open { display: block; }
+    .dropdown-item {
+      padding: 9px 14px; font-size: 13px; cursor: pointer; color: #333;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: background 0.1s;
+    }
+    .dropdown-item:hover { background: #f5f5f5; }
+    .dropdown-item.selected { background: #fff5f5; color: var(--red); font-weight: 500; }
+    .dropdown-item-del {
+      background: none; border: none; cursor: pointer; color: #ccc; padding: 2px 4px;
+      border-radius: 4px; font-size: 12px; line-height: 1; display: flex; align-items: center;
+      transition: color 0.1s, background 0.1s;
+    }
+    .dropdown-item-del:hover { color: var(--red); background: #fff0f0; }
+    .dropdown-add-row {
+      padding: 8px 10px; display: flex; gap: 6px; border-top: 0.5px solid #eee;
+      background: #fafafa;
+    }
+    .dropdown-add-input {
+      flex: 1; border: 0.5px solid #ddd; border-radius: 6px; padding: 6px 10px;
+      font-size: 12px; outline: none; font-family: var(--font); color: var(--text);
+    }
+    .dropdown-add-input:focus { border-color: var(--red); }
+    .dropdown-add-btn {
+      background: var(--red); color: #fff; border: none; border-radius: 6px;
+      padding: 6px 10px; font-size: 12px; cursor: pointer; font-weight: 500; white-space: nowrap;
+    }
+    .dropdown-add-btn:hover { background: #c0101a; }
+
+    /* ── TAG OBSERVAÇÃO ── */
+    .obs-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #dbeafe; color: #1d4ed8; font-size: 10px; font-weight: 600;
+      padding: 2px 8px; border-radius: 20px; white-space: nowrap; letter-spacing: 0.3px;
+    }
+    .obs-tag i { font-size: 10px; }
+
+    /* ── MODAL EDIÇÃO CLIENTE ── */
+    #modal-edit-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+      display: none; align-items: center; justify-content: center; z-index: 500;
+    }
+    #modal-edit-overlay.open { display: flex; }
+    .modal-edit-box {
+      background: #fff; border-radius: 16px; padding: 28px; width: 100%; max-width: 420px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18); max-height: 90vh; overflow-y: auto;
+    }
+    .modal-edit-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+    .modal-edit-subtitle { font-size: 12px; color: #999; margin-bottom: 20px; }
+    .modal-edit-fields { display: flex; flex-direction: column; gap: 14px; }
+    .modal-edit-label { font-size: 12px; font-weight: 500; color: #666; margin-bottom: 5px; display: block; }
+    .modal-edit-input {
+      border: 0.5px solid #ddd; border-radius: 8px; padding: 9px 12px;
+      font-size: 13px; outline: none; color: var(--text); width: 100%;
+      font-family: var(--font); background: #fff;
+    }
+    .modal-edit-input:focus { border-color: var(--red); }
+    textarea.modal-edit-input { resize: vertical; min-height: 80px; }
+    .modal-edit-oftalmo-grid { display: flex; flex-direction: column; gap: 5px; }
+    .modal-edit-oftalmo-btn {
+      border: 0.5px solid #ddd; border-radius: 8px; padding: 8px 12px;
+      background: #fafafa; color: #444; font-size: 12px; cursor: pointer;
+      text-align: left; font-weight: 400; transition: all 0.12s;
+    }
+    .modal-edit-oftalmo-btn.active { border: 2px solid var(--red); background: var(--red); color: #fff; font-weight: 500; }
+    .modal-edit-footer { display: flex; gap: 10px; margin-top: 20px; }
+
     @media (max-width: 700px) {
       .layout { grid-template-columns: 1fr; }
       aside { position: static; height: auto; }
@@ -306,7 +392,19 @@
 
       <div class="field">
         <div class="field-label"><i class="ti ti-stethoscope"></i>Oftalmologista</div>
-        <div id="oftalmo-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        <div class="oftalmo-dropdown-wrap" id="oftalmo-dropdown-wrap">
+          <button class="oftalmo-dropdown-trigger" id="oftalmo-dropdown-trigger" type="button">
+            <span id="oftalmo-trigger-label">Selecionar oftalmologista…</span>
+            <i class="ti ti-chevron-down dropdown-arrow" id="oftalmo-dropdown-arrow"></i>
+          </button>
+          <div class="oftalmo-dropdown-menu" id="oftalmo-dropdown-menu">
+            <div id="oftalmo-dropdown-items"></div>
+            <div class="dropdown-add-row">
+              <input class="dropdown-add-input" id="oftalmo-new-input" placeholder="Nome do novo oftalmologista…" maxlength="60" />
+              <button class="dropdown-add-btn" id="oftalmo-add-btn"><i class="ti ti-plus"></i> Adicionar</button>
+            </div>
+          </div>
+        </div>
         <div class="field-error" id="err-oftalmo"></div>
       </div>
 
@@ -371,6 +469,40 @@
     <div class="modal-footer">
       <button class="btn-cancel" id="modal-cancel">Cancelar</button>
       <button class="btn-confirm" id="modal-confirm">Salvar alteração</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDIÇÃO CLIENTE -->
+<div id="modal-edit-overlay">
+  <div class="modal-edit-box">
+    <div class="modal-edit-title">Editar cadastro</div>
+    <div class="modal-edit-subtitle" id="modal-edit-subtitle">Altere as informações do cliente</div>
+    <div class="modal-edit-fields">
+      <div>
+        <label class="modal-edit-label"><i class="ti ti-user" style="margin-right:4px;"></i>Nome completo</label>
+        <input class="modal-edit-input" id="edit-nome" placeholder="Nome completo" />
+      </div>
+      <div>
+        <label class="modal-edit-label"><i class="ti ti-phone" style="margin-right:4px;"></i>Telefone / WhatsApp</label>
+        <input class="modal-edit-input" id="edit-telefone" placeholder="(19) 99999-9999" maxlength="15" />
+      </div>
+      <div>
+        <label class="modal-edit-label"><i class="ti ti-calendar" style="margin-right:4px;"></i>Data da visita</label>
+        <input class="modal-edit-input" type="date" id="edit-data" />
+      </div>
+      <div>
+        <label class="modal-edit-label"><i class="ti ti-stethoscope" style="margin-right:4px;"></i>Oftalmologista</label>
+        <div class="modal-edit-oftalmo-grid" id="edit-oftalmo-list"></div>
+      </div>
+      <div>
+        <label class="modal-edit-label"><i class="ti ti-notes" style="margin-right:4px;"></i>Observações</label>
+        <textarea class="modal-edit-input" id="edit-obs" placeholder="Adicione observações importantes sobre este cliente…"></textarea>
+      </div>
+    </div>
+    <div class="modal-edit-footer">
+      <button class="btn-cancel" id="modal-edit-cancel">Cancelar</button>
+      <button class="btn-confirm" id="modal-edit-confirm"><i class="ti ti-device-floppy" style="margin-right:4px;"></i>Salvar alterações</button>
     </div>
   </div>
 </div>
@@ -477,11 +609,13 @@
   resetIdleTimer(); // inicia na carga da página
 
   // ── DADOS ─────────────────────────────────────────────────
-  const OFTALMOLOGISTAS = [
+  const OFTALMOLOGISTAS_DEFAULT = [
     "Danilo Pimentel","Fernanda Pimentel","Isabele Leone",
     "Ana Claudia","Roberta Sleptys","Henrique Balarin","Marcia Pesce","Cópia do grau",
     "João Messetti",
   ];
+  // Lista dinâmica de oftalmologistas (carregada/salva no Firestore)
+  let OFTALMOLOGISTAS = [...OFTALMOLOGISTAS_DEFAULT];
   const SITUACOES = [
     { value:"comprou",   label:"Comprou",   color:"#1b7a3e", bg:"#e6f4ec" },
     { value:"reservado", label:"Reservado", color:"#b45309", bg:"#fff3e0" },
@@ -570,21 +704,92 @@
     window.open(`https://api.whatsapp.com/send?phone=55${num}&text=${msg}`, "_blank");
   }
 
-  // ── BUILD SIDEBAR BUTTONS ─────────────────────────────────
-  (function buildSidebar() {
-    const ol = document.getElementById("oftalmo-list");
+  // ── BUILD SIDEBAR ─────────────────────────────────────────
+  function buildOftalmoDropdown() {
+    const itemsContainer = document.getElementById("oftalmo-dropdown-items");
+    itemsContainer.innerHTML = "";
     OFTALMOLOGISTAS.forEach(nome => {
-      const b = document.createElement("button");
-      b.className = "oftalmo-btn";
-      b.textContent = nome;
-      b.addEventListener("click", () => {
+      const row = document.createElement("div");
+      row.className = "dropdown-item" + (oftalmoSel === nome ? " selected" : "");
+      row.dataset.nome = nome;
+      row.innerHTML = `<span>${nome}</span><button class="dropdown-item-del" title="Remover oftalmologista" data-nome="${nome}"><i class="ti ti-x"></i></button>`;
+      row.addEventListener("click", (e) => {
+        if (e.target.closest(".dropdown-item-del")) return;
         oftalmoSel = nome;
-        ol.querySelectorAll(".oftalmo-btn").forEach(x => x.classList.remove("active"));
-        b.classList.add("active");
+        document.getElementById("oftalmo-trigger-label").textContent = nome;
+        const trigger = document.getElementById("oftalmo-dropdown-trigger");
+        trigger.classList.add("active-sel");
         document.getElementById("err-oftalmo").textContent = "";
+        closeOftalmoDropdown();
+        buildOftalmoDropdown();
       });
-      ol.appendChild(b);
+      row.querySelector(".dropdown-item-del").addEventListener("click", async (e) => {
+        e.stopPropagation();
+        if (!confirm(`Remover "${nome}" da lista de oftalmologistas?`)) return;
+        OFTALMOLOGISTAS = OFTALMOLOGISTAS.filter(o => o !== nome);
+        if (oftalmoSel === nome) {
+          oftalmoSel = "";
+          document.getElementById("oftalmo-trigger-label").textContent = "Selecionar oftalmologista…";
+          document.getElementById("oftalmo-dropdown-trigger").classList.remove("active-sel");
+        }
+        await salvarOftalmologistasFirestore();
+        buildOftalmoDropdown();
+      });
+      itemsContainer.appendChild(row);
     });
+  }
+
+  function openOftalmoDropdown() {
+    document.getElementById("oftalmo-dropdown-menu").classList.add("open");
+    document.getElementById("oftalmo-dropdown-arrow").classList.add("open");
+  }
+  function closeOftalmoDropdown() {
+    document.getElementById("oftalmo-dropdown-menu").classList.remove("open");
+    document.getElementById("oftalmo-dropdown-arrow").classList.remove("open");
+  }
+
+  document.getElementById("oftalmo-dropdown-trigger").addEventListener("click", (e) => {
+    const menu = document.getElementById("oftalmo-dropdown-menu");
+    if (menu.classList.contains("open")) closeOftalmoDropdown();
+    else openOftalmoDropdown();
+  });
+
+  // Fecha dropdown ao clicar fora
+  document.addEventListener("click", (e) => {
+    if (!document.getElementById("oftalmo-dropdown-wrap").contains(e.target)) {
+      closeOftalmoDropdown();
+    }
+  });
+
+  // Adicionar novo oftalmologista
+  document.getElementById("oftalmo-add-btn").addEventListener("click", async () => {
+    const input = document.getElementById("oftalmo-new-input");
+    const nome = input.value.trim();
+    if (!nome) return;
+    if (OFTALMOLOGISTAS.map(o => o.toLowerCase()).includes(nome.toLowerCase())) {
+      showToast("Esse oftalmologista já está na lista.");
+      return;
+    }
+    OFTALMOLOGISTAS.push(nome);
+    input.value = "";
+    await salvarOftalmologistasFirestore();
+    buildOftalmoDropdown();
+    showToast(`"${nome}" adicionado à lista!`);
+  });
+  document.getElementById("oftalmo-new-input").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("oftalmo-add-btn").click();
+  });
+
+  // ── SALVAR OFTALMOLOGISTAS NO FIRESTORE ───────────────────
+  async function salvarOftalmologistasFirestore() {
+    if (!lojaId) return;
+    try {
+      await updateDoc(doc(db, "lojas", lojaId), { oftalmologistas: OFTALMOLOGISTAS });
+    } catch { /* silencioso */ }
+  }
+
+  (function buildSidebar() {
+    buildOftalmoDropdown();
 
     const sl = document.getElementById("situacao-list");
     SITUACOES.forEach(s => {
@@ -649,13 +854,17 @@
       const div = document.createElement("div");
       div.className = "client-card";
       div.style.cursor = "default";
+      const obsTag = c.obs ? `<span class="obs-tag"><i class="ti ti-notes"></i>Observação</span>` : "";
       div.innerHTML = `
         <div class="avatar" style="background:${av.bg};color:${av.color};">${initials(c.nome)}</div>
         <div class="client-info">
-          <div class="client-name">${c.nome}</div>
+          <div class="client-name" style="display:flex;align-items:center;gap:6px;">${c.nome} ${obsTag}</div>
           <div class="client-meta">${c.oftalmo} · ${c.telefone} · ${fmtData(c.data)}</div>
         </div>
         ${sit ? `<span class="badge" style="background:${sit.bg};color:${sit.color};cursor:pointer;" title="Clique para editar situação">${sit.label} ✎</span>` : ""}
+        <button class="btn-edit-client" title="Editar cadastro" style="width:32px;height:32px;border-radius:50%;background:#f1f1f1;border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+          <i class="ti ti-pencil" style="font-size:14px;color:#666;"></i>
+        </button>
         <button class="btn-wa" title="Enviar WhatsApp">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
@@ -663,6 +872,7 @@
         </button>
       `;
       div.querySelector(".btn-wa").addEventListener("click", () => abrirWhatsApp(c));
+      div.querySelector(".btn-edit-client").addEventListener("click", () => abrirModalEditarCliente(c));
       const badge = div.querySelector(".badge");
       if (badge) badge.addEventListener("click", () => abrirModalEdicao(c));
       container.appendChild(div);
@@ -741,6 +951,78 @@
     btn.textContent = "Salvar alteração";
   });
 
+  // ── MODAL EDIÇÃO CLIENTE ─────────────────────────────────
+  let editClienteAtual = null;
+  let editOftalmoSel   = "";
+
+  function abrirModalEditarCliente(c) {
+    editClienteAtual = c;
+    editOftalmoSel   = c.oftalmo || "";
+
+    document.getElementById("modal-edit-subtitle").textContent = `Editando: ${c.nome}`;
+    document.getElementById("edit-nome").value     = c.nome || "";
+    document.getElementById("edit-telefone").value = c.telefone || "";
+    document.getElementById("edit-data").value     = c.data || "";
+    document.getElementById("edit-obs").value      = c.obs || "";
+
+    // Monta botões de oftalmologista no modal de edição
+    const ol = document.getElementById("edit-oftalmo-list");
+    ol.innerHTML = "";
+    OFTALMOLOGISTAS.forEach(nome => {
+      const b = document.createElement("button");
+      b.className = "modal-edit-oftalmo-btn" + (editOftalmoSel === nome ? " active" : "");
+      b.textContent = nome;
+      b.type = "button";
+      b.addEventListener("click", () => {
+        editOftalmoSel = nome;
+        ol.querySelectorAll(".modal-edit-oftalmo-btn").forEach(x => x.classList.remove("active"));
+        b.classList.add("active");
+      });
+      ol.appendChild(b);
+    });
+
+    document.getElementById("modal-edit-overlay").classList.add("open");
+  }
+
+  document.getElementById("edit-telefone").addEventListener("input", function() {
+    this.value = maskPhone(this.value);
+  });
+
+  document.getElementById("modal-edit-cancel").addEventListener("click", () => {
+    document.getElementById("modal-edit-overlay").classList.remove("open");
+  });
+  document.getElementById("modal-edit-overlay").addEventListener("click", e => {
+    if (e.target === document.getElementById("modal-edit-overlay"))
+      document.getElementById("modal-edit-overlay").classList.remove("open");
+  });
+
+  document.getElementById("modal-edit-confirm").addEventListener("click", async () => {
+    if (!editClienteAtual) return;
+    const nome     = document.getElementById("edit-nome").value.trim();
+    const telefone = document.getElementById("edit-telefone").value.trim();
+    const data     = document.getElementById("edit-data").value;
+    const obs      = document.getElementById("edit-obs").value.trim();
+    if (!nome) { showToast("O nome não pode estar vazio."); return; }
+    if (!telefone) { showToast("O telefone não pode estar vazio."); return; }
+
+    const btn = document.getElementById("modal-edit-confirm");
+    btn.disabled = true;
+    btn.textContent = "Salvando...";
+    try {
+      const updates = { nome, telefone, data, oftalmo: editOftalmoSel || editClienteAtual.oftalmo, obs };
+      await updateDoc(doc(db, "lojas", lojaId, "clientes", editClienteAtual.id), updates);
+      const idx = clientes.findIndex(c => c.id === editClienteAtual.id);
+      if (idx !== -1) Object.assign(clientes[idx], updates);
+      document.getElementById("modal-edit-overlay").classList.remove("open");
+      renderList();
+      showToast("Cadastro atualizado com sucesso!");
+    } catch {
+      showToast("Erro ao salvar. Verifique sua conexão.");
+    }
+    btn.disabled = false;
+    btn.innerHTML = `<i class="ti ti-device-floppy" style="margin-right:4px;"></i>Salvar alterações`;
+  });
+
   // ── AUTH STATE ────────────────────────────────────────────
   onAuthStateChanged(auth, async (user) => {
     document.getElementById("loading-screen").style.display = "none";
@@ -767,7 +1049,14 @@
 
       const lojaDoc = lojasSnap.docs[0];
       lojaId = lojaDoc.id;
-      const nomeLoja = lojaDoc.data().nome || user.email;
+      const lojaData = lojaDoc.data();
+      const nomeLoja = lojaData.nome || user.email;
+
+      // Carrega lista de oftalmologistas salva na loja (se existir)
+      if (Array.isArray(lojaData.oftalmologistas) && lojaData.oftalmologistas.length > 0) {
+        OFTALMOLOGISTAS = lojaData.oftalmologistas;
+        buildOftalmoDropdown();
+      }
 
       document.getElementById("login-screen").style.display = "none";
       document.getElementById("app-screen").style.display   = "flex";
@@ -860,7 +1149,10 @@
       document.getElementById("f-data").value = new Date().toISOString().split("T")[0];
       oftalmoSel  = "";
       situacaoSel = "";
-      document.querySelectorAll(".oftalmo-btn").forEach(b => b.classList.remove("active"));
+      // Reset dropdown de oftalmologista
+      document.getElementById("oftalmo-trigger-label").textContent = "Selecionar oftalmologista…";
+      document.getElementById("oftalmo-dropdown-trigger").classList.remove("active-sel");
+      buildOftalmoDropdown();
       document.querySelectorAll(".situacao-btn").forEach(b => {
         b.style.border = "0.5px solid #ddd"; b.style.background = "#fafafa";
         b.style.color = "#666"; b.style.fontWeight = "400";
